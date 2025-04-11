@@ -5,24 +5,21 @@ import json
 
 
 @shared_task
-def send_to_rabbitmq(product_event_data):
+def send_product_event_to_rabbitmq(product_event_data):
     """
     Celery task to send a validated product event to RabbitMQ.
     """
-    connection = BlockingConnection(
-        ConnectionParameters(
-            host=os.environ.get('RABBITMQ_HOST'),
-            port=os.environ.get('RABBITMQ_PORT'),
-            credentials=PlainCredentials(os.environ.get('RABBITMQ_DEFAULT_USER'), os.environ.get('RABBITMQ_DEFAULT_PASS'))
-        )
+    connection_params = ConnectionParameters(
+        host=os.environ.get('RABBITMQ_HOST'),
+        port=int(os.environ.get('RABBITMQ_PORT')),
+        credentials=PlainCredentials(os.environ.get('RABBITMQ_DEFAULT_USER'), os.environ.get('RABBITMQ_DEFAULT_PASS'))
     )
-    channel = connection.channel()
-    channel.queue_declare(queue='product_events')
+    with BlockingConnection(connection_params) as connection:
+        with connection.channel() as channel:
+            channel.queue_declare(queue='product_events', durable=True)
 
-    channel.basic_publish(
-        exchange='',
-        routing_key='product_events',
-        body=json.dumps(product_event_data)
-    )
-    connection.close()
-
+            channel.basic_publish(
+                exchange='',
+                routing_key='product_events',
+                body=json.dumps(product_event_data)
+            )
