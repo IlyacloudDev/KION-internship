@@ -132,3 +132,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = None
+
+
+# Fields used for deduplication
+
+DEDUP_FIELDS = ['client_id', 'event_datetime', 'event_name', 'product_id', 'sid', 'r']
+
+
+REDIS_EVENT_TTL_SECONDS = 604800
