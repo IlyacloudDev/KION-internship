@@ -1,7 +1,6 @@
 from locust import HttpUser, task, between
-import json
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class ProductEventUser(HttpUser):
@@ -9,6 +8,7 @@ class ProductEventUser(HttpUser):
 
     @task
     def send_product_event(self):
+        now_utc = datetime.now(timezone.utc)
         payload = {
             "platform": "android_tv",
             "event_name": "app_list",
@@ -61,10 +61,10 @@ class ProductEventUser(HttpUser):
             "discount": [],
             "is_trial": None,
             "price": 0,
-            "dt_add": datetime.utcnow().isoformat() + "Z",
+            "dt_add": now_utc.isoformat().replace("+00:00", "Z"),
             "url_user_event": "",
-            "event_receive_timestamp": int(datetime.utcnow().timestamp()),
-            "event_receive_dt_str": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "event_receive_timestamp": int(now_utc.timestamp()),
+            "event_receive_dt_str": now_utc.strftime("%Y-%m-%d %H:%M:%S.%f"),
             "shelf_name": "",
             "shelf_index": None,
             "card_index": None,
@@ -75,7 +75,7 @@ class ProductEventUser(HttpUser):
             "sc": 1,
             "sid": "8772092941743208318",
             "sr": "1920x1080",
-            "ts": datetime.utcnow().isoformat() + "+03:00",
+            "ts": now_utc.isoformat().replace("+00:00", "+03:00"),
             "os": "Android",
             "mnf": "SDMC",
             "mdl": "DV9135",
@@ -94,7 +94,7 @@ class ProductEventUser(HttpUser):
             "error_category": 999,
             "app_version": "1.1.137.74.6.1",
             "downloaded": -25,
-            "inserted_dt": datetime.utcnow().isoformat() + "Z",
+            "inserted_dt": now_utc.isoformat().replace("+00:00", "Z"),
             "build_model": "DV9135",
             "build_manufacturer": "SDMC",
             "debug": False
