@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 
 class ProductEventUser(HttpUser):
-    wait_time = between(0.01, 0.05)
+    wait_time = between(0.1, 0.5)
 
     @task
     def send_product_event(self):
