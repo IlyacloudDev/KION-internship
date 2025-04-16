@@ -140,7 +140,7 @@ CELERY_RESULT_BACKEND = None
 
 # Fields used for deduplication
 
-DEDUP_FIELDS = ['client_id', 'event_datetime', 'event_name', 'product_id', 'sid', 'r']
+DEDUP_FIELDS = ['client_id', 'event_name', 'product_id', 'sid', 'r']
 
 
 REDIS_EVENT_TTL_SECONDS = 604800

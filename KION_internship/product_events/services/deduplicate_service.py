@@ -2,6 +2,10 @@ import os
 import hashlib
 from redis import Redis
 from config.settings import DEDUP_FIELDS, REDIS_EVENT_TTL_SECONDS
+from pybloom_live import ScalableBloomFilter
+
+
+bloom_filter = ScalableBloomFilter(initial_capacity=100000, error_rate=0.001)
 
 
 redis_client = Redis(
@@ -28,13 +32,24 @@ def generate_hash(key_data: str) -> str:
 
 def is_duplicate_event(product_event: dict) -> bool:
     """
-    Checks for duplicates using Redis hash set only.
+    Checks for duplicates using a two-layer check:
+    1. Bloom filter (in-memory, fast) to reduce число запросов к Redis.
+    2. Redis for precise, persistent check.
+
+    If the event hash is not found in the Bloom filter, it is immediately
+    added and saved into Redis. If it is found in the Bloom filter, we double-check
+    using Redis for confirmation.
     """
     key_data = extract_deduplication_key(product_event)
     event_hash = generate_hash(key_data)
 
-    if redis_client.exists(event_hash):
-        return True
-
-    redis_client.setex(event_hash, REDIS_EVENT_TTL_SECONDS, 1)
-    return False
+    if event_hash in bloom_filter:
+        if redis_client.exists(event_hash):
+            return True
+        else:
+            redis_client.setex(event_hash, REDIS_EVENT_TTL_SECONDS, 1)
+            return False
+    else:
+        bloom_filter.add(event_hash)
+        redis_client.setex(event_hash, REDIS_EVENT_TTL_SECONDS, 1)
+        return False
