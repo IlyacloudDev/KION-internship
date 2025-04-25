@@ -144,3 +144,9 @@ DEDUP_FIELDS = ['client_id', 'event_name', 'product_id', 'sid', 'r']
 
 
 REDIS_EVENT_TTL_SECONDS = 604800
+
+
+BLOOM_KEY   = "product_event_bloom"
+ERROR_RATE  = 0.001
+INIT_CAP    = 100_000_000
+EXPANSION   = 2
