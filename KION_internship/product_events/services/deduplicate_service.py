@@ -2,10 +2,6 @@ import os
 import hashlib
 from redis import Redis
 from config.settings import DEDUP_FIELDS, REDIS_EVENT_TTL_SECONDS, BLOOM_KEY, ERROR_RATE, INIT_CAP, EXPANSION
-from pybloom_live import ScalableBloomFilter
-
-
-bloom_filter = ScalableBloomFilter(initial_capacity=100000, error_rate=0.001)
 
 
 redis_client = Redis(
