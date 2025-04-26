@@ -71,7 +71,7 @@ class ProductEventUser(HttpUser):
             "error_message": "",
             "platform_useragent": "",
             "product_id": "328da3b0-7623-443c-a3bd-dbc5a9222e75",
-            "r": str(random.randint(1000000000000000000, 9999999999999999999)),
+            "r": str(random.randint(10000, 99999)),
             "sc": 1,
             "sid": "8772092941743208318",
             "sr": "1920x1080",
