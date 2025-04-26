@@ -1,5 +1,3 @@
->[!CAUTION]
-> Версия этого README.md файла неокончательная, документация будет расширяться
 ## О проекте:
 Микросервис дедупликатора продуктовых событий на Python
 ___
@@ -8,59 +6,34 @@ ___
 ```bash
 git@github.com:IlyacloudDev/KION-internship.git
 ```
-#### 2. Установите все зависимости из файла requirements.txt
-```bash
-pip install -r requirements.txt
+#### 2. Находясь на том же уровне, что и Dockerfile, docker-compose.dev.yml, создайте файл .env с переменными окружения проекта и пропишите значения для переменных
+*(примерное оформление .env)*:
 ```
-#### 3. Находясь на том же уровне, что и файл requirements.txt, создайте файл .env с переменными окружения проекта и пропишите значения для переменных, примерное оформление .env:
-```
-SECRET_KEY = something
+SECRET_KEY=something
 
-POSTGRES_USERNAME = something
-POSTGRES_PASSWORD = something
-POSTGRES_HOST = something
-POSTGRES_PORT = something
-POSTGRES_DATABASE = something
+POSTGRES_USERNAME=something
+POSTGRES_PASSWORD=something
+POSTGRES_HOST=something
+POSTGRES_PORT=something
+POSTGRES_DATABASE=something
 
-RABBITMQ_DEFAULT_USER = something
-RABBITMQ_DEFAULT_PASS = something
-RABBITMQ_HOST = something
-RABBITMQ_PORT = something
-RABBITMQ_URL = something
+RABBITMQ_DEFAULT_USER=something
+RABBITMQ_DEFAULT_PASS=something
+RABBITMQ_HOST=something
+RABBITMQ_PORT=something
+RABBITMQ_URL=something
 
 
-CELERY_BROKER_URL = something
+CELERY_BROKER_URL=something
 
-REDIS_HOST = something
-REDIS_PORT = something
-REDIS_DB = something
+REDIS_HOST=something
+REDIS_PORT=something
+REDIS_DB=something
 ```
-#### 4. Запустите docker-контейнеры Redis-а и RabbitMQ
+#### 3. Запустите docker-compose.dev.yml
 ```bash
-docker-compose up -d
-```
-#### 5. Перейдите в директорию django-проекта на уровень с файлом manage.py
-```bash
-cd KION_internship/
-```
-#### 6. Проект работает с PostgreSQL, необходимо применить миграции
-```bash 
-python manage.py migrate
-```
-#### 7. Запустите django-сервер через gunicorn
-```bash
-gunicorn -c gunicorn.conf.py config.wsgi:application
-```
-#### 8. Запустите celery
-```bash
-celery -A config worker -P gevent -c 50
-```
-#### 9. Запустите консьюмер
-```bash
-python -m product_events.consumer
-```
->[!NOTE]
-> В дальнейшем весь проект будет запускаться через docker!
+docker-compose -f docker-compose.dev.yml up -d
+````
 ___
 ## Как протестировать?
 - Можно сделать ручное тестирование через Postman
@@ -113,12 +86,24 @@ ___
 locust -f locustfile.py --users 500 --spawn-rate 100 --host http://localhost:8000 
 ```
 Перейдите на http://0.0.0.0:8089 и начните запуск тестирования
+- Для очищения контейнеров PostgreSQL, Redis и Bloom-фильтра используйте:
+```bash
+docker exec -it postgres psql -U postgres -d kion_internship -c "TRUNCATE TABLE product_events_productevent RESTART IDENTITY CASCADE;"
+docker exec -it redis redis-cli flushall
+docker exec -it redis redis-cli DEL product_event_bloom
+```
 ___
 ## Как работает?
 #### 1. Есть API-эндпоинт, который принимает POST-запросы с продуктовыми событиями и асинхронно через Celery записывает продуктовые события в брокер сообщений RabbitMQ
 
 #### 2. Следующим шагом начинается работа консьюмера RabbitMQ, который забирает продуктовые события из брокера сообщений и отдает функции, которая проверяет событие на дубликат
 
-#### 3. Проверка на дубликат идет в 2 шага: сначала через фильтр Блума, а потом через хеши продуктовых событий, которые хранятся в Redis
+#### 3. Проверка на дубликат идет в 2 шага: сначала через фильтр Блума на основе RedisBloom, а потом через хеши продуктовых событий, которые хранятся в Redis
 
 #### 4. Если продуктовое событие дубликат - оно отбрасывается, если же нет, сохраняется в PostgreSQL для дальнейшей аналитики
+
+___
+### Пример статистики при высоконагруженном тестировании через Locust
+*Параметры locust - (users: 500; ram up: 100; time: 3m)*
+![Статистика locust](assets/test_example_locust.jpg)
+![Статистика locust терминал](assets/test_example_terminal.jpg)
